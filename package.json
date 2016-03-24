@@ -1,5 +1,5 @@
 {
-  "name": "Kiva",
+  "name": "kiva",
   "version": "1.0.0",
   "description": "模拟数据生成器",
   "main": "./dist/kiva.js",
