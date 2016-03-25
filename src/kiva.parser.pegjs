@@ -6,24 +6,22 @@ String
 
 /************** email start *****************/
 Email
-    = '@S[email]'i _ lp:LocalPartLen _ "-"* _ dp:DomainPartLen _ ds:DomainSuffix {
+    = '@S[email]'i _ lp:LocalPartLen _ "-"* _ dp:DomainPart? {
         return {
             dataType: 'string',
             type: 'email',
             localPartLen: lp,
-            domainPartLen: dp,
-            domainSuffix: ds
+            domainPart: dp
         }
     }
 
 LocalPartLen
     = RandomNumber
 
-DomainPartLen
-    = RandomNumber
-
-DomainSuffix
-    = RandomString
+DomainPart
+    = dp:(RandomString "." RandomString) {
+    	return dp.join('')
+    }
 
 /************** email end *****************/
 
@@ -35,7 +33,7 @@ RandomNumber
     }
 
 RandomString
-    = l:Letter* {
+    = l:Character* {
         return l.join('');
     }
 
@@ -49,6 +47,9 @@ Number
 
 Letter
     = [a-zA-Z]
+
+Character
+	= [a-zA-Z0-9]
 
 ws "Whitespace"
     = [ \t]

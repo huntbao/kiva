@@ -46,19 +46,30 @@
 
 	/**
 	 * @author huntbao
+	 * @module Kiva
 	 */
 	'use strict'
 
 	var parser = __webpack_require__(1)
 	var kivaString = __webpack_require__(2)
 
-	var Kiva = {
-	    get: function(rule) {
-	        var result = parser.parse(rule)
+	module.exports = {
+	    /**
+	     * 根据 rule 返回相应的 mock 数据
+	     * @param {string} rule - 规则表达式
+	     * @return {mixes}
+	     */
+	    get: function (rule) {
+	        var result = Object.create(null)
+	        try {
+	            result = parser.parse(rule)
+	        } catch (e) {
+	            console.log('parse rule error!')
+	        }
 	        switch (result.dataType) {
 	            case 'string':
 	                if (kivaString[result.type]) {
-	                    return kivaString[result.type]()
+	                    return kivaString[result.type](result)
 	                }
 	                break
 
@@ -68,7 +79,6 @@
 	    }
 	}
 
-	module.exports = Kiva
 
 /***/ },
 /* 1 */
@@ -116,30 +126,36 @@
 	        peg$c1 = { type: "literal", value: "@S[email]", description: "\"@S[email]\"" },
 	        peg$c2 = "-",
 	        peg$c3 = { type: "literal", value: "-", description: "\"-\"" },
-	        peg$c4 = function(lp, dp, ds) {
+	        peg$c4 = function(lp, dp) {
 	                return {
 	                    dataType: 'string',
 	                    type: 'email',
 	                    localPartLen: lp,
-	                    domainPartLen: dp,
-	                    domainSuffix: ds
+	                    domainPart: dp
 	                }
 	            },
-	        peg$c5 = function(n) {
+	        peg$c5 = ".",
+	        peg$c6 = { type: "literal", value: ".", description: "\".\"" },
+	        peg$c7 = function(dp) {
+	            	return dp.join('')
+	            },
+	        peg$c8 = function(n) {
 	                return parseInt(n.join(''));
 	            },
-	        peg$c6 = function(l) {
+	        peg$c9 = function(l) {
 	                return l.join('');
 	            },
-	        peg$c7 = /^[0-9]/,
-	        peg$c8 = { type: "class", value: "[0-9]", description: "[0-9]" },
-	        peg$c9 = /^[a-zA-Z]/,
-	        peg$c10 = { type: "class", value: "[a-zA-Z]", description: "[a-zA-Z]" },
-	        peg$c11 = { type: "other", description: "Whitespace" },
-	        peg$c12 = /^[ \t]/,
-	        peg$c13 = { type: "class", value: "[ \\t]", description: "[ \\t]" },
-	        peg$c14 = { type: "other", description: "Zero or more whitespaces" },
-	        peg$c15 = { type: "other", description: "One or more whitespaces" },
+	        peg$c10 = /^[0-9]/,
+	        peg$c11 = { type: "class", value: "[0-9]", description: "[0-9]" },
+	        peg$c12 = /^[a-zA-Z]/,
+	        peg$c13 = { type: "class", value: "[a-zA-Z]", description: "[a-zA-Z]" },
+	        peg$c14 = /^[a-zA-Z0-9]/,
+	        peg$c15 = { type: "class", value: "[a-zA-Z0-9]", description: "[a-zA-Z0-9]" },
+	        peg$c16 = { type: "other", description: "Whitespace" },
+	        peg$c17 = /^[ \t]/,
+	        peg$c18 = { type: "class", value: "[ \\t]", description: "[ \\t]" },
+	        peg$c19 = { type: "other", description: "Zero or more whitespaces" },
+	        peg$c20 = { type: "other", description: "One or more whitespaces" },
 
 	        peg$currPos          = 0,
 	        peg$savedPos         = 0,
@@ -335,7 +351,7 @@
 	    }
 
 	    function peg$parseEmail() {
-	      var s0, s1, s2, s3, s4, s5, s6, s7, s8, s9;
+	      var s0, s1, s2, s3, s4, s5, s6, s7;
 
 	      s0 = peg$currPos;
 	      if (input.substr(peg$currPos, 9).toLowerCase() === peg$c0) {
@@ -373,23 +389,14 @@
 	              if (s5 !== peg$FAILED) {
 	                s6 = peg$parse_();
 	                if (s6 !== peg$FAILED) {
-	                  s7 = peg$parseRandomNumber();
+	                  s7 = peg$parseDomainPart();
+	                  if (s7 === peg$FAILED) {
+	                    s7 = null;
+	                  }
 	                  if (s7 !== peg$FAILED) {
-	                    s8 = peg$parse_();
-	                    if (s8 !== peg$FAILED) {
-	                      s9 = peg$parseRandomString();
-	                      if (s9 !== peg$FAILED) {
-	                        peg$savedPos = s0;
-	                        s1 = peg$c4(s3, s7, s9);
-	                        s0 = s1;
-	                      } else {
-	                        peg$currPos = s0;
-	                        s0 = peg$FAILED;
-	                      }
-	                    } else {
-	                      peg$currPos = s0;
-	                      s0 = peg$FAILED;
-	                    }
+	                    peg$savedPos = s0;
+	                    s1 = peg$c4(s3, s7);
+	                    s0 = s1;
 	                  } else {
 	                    peg$currPos = s0;
 	                    s0 = peg$FAILED;
@@ -422,6 +429,46 @@
 	      return s0;
 	    }
 
+	    function peg$parseDomainPart() {
+	      var s0, s1, s2, s3, s4;
+
+	      s0 = peg$currPos;
+	      s1 = peg$currPos;
+	      s2 = peg$parseRandomString();
+	      if (s2 !== peg$FAILED) {
+	        if (input.charCodeAt(peg$currPos) === 46) {
+	          s3 = peg$c5;
+	          peg$currPos++;
+	        } else {
+	          s3 = peg$FAILED;
+	          if (peg$silentFails === 0) { peg$fail(peg$c6); }
+	        }
+	        if (s3 !== peg$FAILED) {
+	          s4 = peg$parseRandomString();
+	          if (s4 !== peg$FAILED) {
+	            s2 = [s2, s3, s4];
+	            s1 = s2;
+	          } else {
+	            peg$currPos = s1;
+	            s1 = peg$FAILED;
+	          }
+	        } else {
+	          peg$currPos = s1;
+	          s1 = peg$FAILED;
+	        }
+	      } else {
+	        peg$currPos = s1;
+	        s1 = peg$FAILED;
+	      }
+	      if (s1 !== peg$FAILED) {
+	        peg$savedPos = s0;
+	        s1 = peg$c7(s1);
+	      }
+	      s0 = s1;
+
+	      return s0;
+	    }
+
 	    function peg$parseRandomNumber() {
 	      var s0, s1, s2;
 
@@ -434,7 +481,7 @@
 	      }
 	      if (s1 !== peg$FAILED) {
 	        peg$savedPos = s0;
-	        s1 = peg$c5(s1);
+	        s1 = peg$c8(s1);
 	      }
 	      s0 = s1;
 
@@ -446,14 +493,14 @@
 
 	      s0 = peg$currPos;
 	      s1 = [];
-	      s2 = peg$parseLetter();
+	      s2 = peg$parseCharacter();
 	      while (s2 !== peg$FAILED) {
 	        s1.push(s2);
-	        s2 = peg$parseLetter();
+	        s2 = peg$parseCharacter();
 	      }
 	      if (s1 !== peg$FAILED) {
 	        peg$savedPos = s0;
-	        s1 = peg$c6(s1);
+	        s1 = peg$c9(s1);
 	      }
 	      s0 = s1;
 
@@ -476,7 +523,7 @@
 	      }
 	      if (s1 !== peg$FAILED) {
 	        peg$savedPos = s0;
-	        s1 = peg$c6(s1);
+	        s1 = peg$c9(s1);
 	      }
 	      s0 = s1;
 
@@ -486,12 +533,12 @@
 	    function peg$parseNumber() {
 	      var s0;
 
-	      if (peg$c7.test(input.charAt(peg$currPos))) {
+	      if (peg$c10.test(input.charAt(peg$currPos))) {
 	        s0 = input.charAt(peg$currPos);
 	        peg$currPos++;
 	      } else {
 	        s0 = peg$FAILED;
-	        if (peg$silentFails === 0) { peg$fail(peg$c8); }
+	        if (peg$silentFails === 0) { peg$fail(peg$c11); }
 	      }
 
 	      return s0;
@@ -500,12 +547,26 @@
 	    function peg$parseLetter() {
 	      var s0;
 
-	      if (peg$c9.test(input.charAt(peg$currPos))) {
+	      if (peg$c12.test(input.charAt(peg$currPos))) {
 	        s0 = input.charAt(peg$currPos);
 	        peg$currPos++;
 	      } else {
 	        s0 = peg$FAILED;
-	        if (peg$silentFails === 0) { peg$fail(peg$c10); }
+	        if (peg$silentFails === 0) { peg$fail(peg$c13); }
+	      }
+
+	      return s0;
+	    }
+
+	    function peg$parseCharacter() {
+	      var s0;
+
+	      if (peg$c14.test(input.charAt(peg$currPos))) {
+	        s0 = input.charAt(peg$currPos);
+	        peg$currPos++;
+	      } else {
+	        s0 = peg$FAILED;
+	        if (peg$silentFails === 0) { peg$fail(peg$c15); }
 	      }
 
 	      return s0;
@@ -515,17 +576,17 @@
 	      var s0, s1;
 
 	      peg$silentFails++;
-	      if (peg$c12.test(input.charAt(peg$currPos))) {
+	      if (peg$c17.test(input.charAt(peg$currPos))) {
 	        s0 = input.charAt(peg$currPos);
 	        peg$currPos++;
 	      } else {
 	        s0 = peg$FAILED;
-	        if (peg$silentFails === 0) { peg$fail(peg$c13); }
+	        if (peg$silentFails === 0) { peg$fail(peg$c18); }
 	      }
 	      peg$silentFails--;
 	      if (s0 === peg$FAILED) {
 	        s1 = peg$FAILED;
-	        if (peg$silentFails === 0) { peg$fail(peg$c11); }
+	        if (peg$silentFails === 0) { peg$fail(peg$c16); }
 	      }
 
 	      return s0;
@@ -544,7 +605,7 @@
 	      peg$silentFails--;
 	      if (s0 === peg$FAILED) {
 	        s1 = peg$FAILED;
-	        if (peg$silentFails === 0) { peg$fail(peg$c14); }
+	        if (peg$silentFails === 0) { peg$fail(peg$c19); }
 	      }
 
 	      return s0;
@@ -567,7 +628,7 @@
 	      peg$silentFails--;
 	      if (s0 === peg$FAILED) {
 	        s1 = peg$FAILED;
-	        if (peg$silentFails === 0) { peg$fail(peg$c15); }
+	        if (peg$silentFails === 0) { peg$fail(peg$c20); }
 	      }
 
 	      return s0;
@@ -602,22 +663,865 @@
 
 /***/ },
 /* 2 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	/**
 	 * @author huntbao
+	 * @module Kiva/String
+	 */
+
+	'use strict'
+	var util = __webpack_require__(3)
+	var kivaUtil = __webpack_require__(7)
+	var dict = __webpack_require__(8)
+
+	module.exports = {
+	    /**
+	     * 生成随机 email 地址
+	     * @param {object} options
+	     * @param {number} [options.localPartLen = 10] - local part 的长度
+	     * @param {number} [options.domainPart] - domain part
+	     * @return {string} - 随机 email 地址
+	     */
+	    email: function (options) {
+	        var lpLen = options.localPartLen || 10
+	        var dp = options.domainPart || dict.EMAIL_DOMAINS[kivaUtil.randomNum(dict.EMAIL_DOMAINS.length - 1)]
+	        // 邮箱第一个字符要以字母开头
+	        var email = dict.LETTERS[kivaUtil.randomNum(dict.LETTERS.length - 1)]
+	        var validCh = dict.VALID_EMAIL_CH
+	        var validChLen = validCh.length
+	        while (--lpLen) {
+	            email += validCh[kivaUtil.randomNum(validChLen - 1)]
+	        }
+	        return `${email}@${dp}`
+	    }
+	}
+
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(global, process) {// Copyright Joyent, Inc. and other Node contributors.
+	//
+	// Permission is hereby granted, free of charge, to any person obtaining a
+	// copy of this software and associated documentation files (the
+	// "Software"), to deal in the Software without restriction, including
+	// without limitation the rights to use, copy, modify, merge, publish,
+	// distribute, sublicense, and/or sell copies of the Software, and to permit
+	// persons to whom the Software is furnished to do so, subject to the
+	// following conditions:
+	//
+	// The above copyright notice and this permission notice shall be included
+	// in all copies or substantial portions of the Software.
+	//
+	// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+	// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+	// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+	// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+	// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+	// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+	var formatRegExp = /%[sdj%]/g;
+	exports.format = function(f) {
+	  if (!isString(f)) {
+	    var objects = [];
+	    for (var i = 0; i < arguments.length; i++) {
+	      objects.push(inspect(arguments[i]));
+	    }
+	    return objects.join(' ');
+	  }
+
+	  var i = 1;
+	  var args = arguments;
+	  var len = args.length;
+	  var str = String(f).replace(formatRegExp, function(x) {
+	    if (x === '%%') return '%';
+	    if (i >= len) return x;
+	    switch (x) {
+	      case '%s': return String(args[i++]);
+	      case '%d': return Number(args[i++]);
+	      case '%j':
+	        try {
+	          return JSON.stringify(args[i++]);
+	        } catch (_) {
+	          return '[Circular]';
+	        }
+	      default:
+	        return x;
+	    }
+	  });
+	  for (var x = args[i]; i < len; x = args[++i]) {
+	    if (isNull(x) || !isObject(x)) {
+	      str += ' ' + x;
+	    } else {
+	      str += ' ' + inspect(x);
+	    }
+	  }
+	  return str;
+	};
+
+
+	// Mark that a method should not be used.
+	// Returns a modified function which warns once by default.
+	// If --no-deprecation is set, then it is a no-op.
+	exports.deprecate = function(fn, msg) {
+	  // Allow for deprecating things in the process of starting up.
+	  if (isUndefined(global.process)) {
+	    return function() {
+	      return exports.deprecate(fn, msg).apply(this, arguments);
+	    };
+	  }
+
+	  if (process.noDeprecation === true) {
+	    return fn;
+	  }
+
+	  var warned = false;
+	  function deprecated() {
+	    if (!warned) {
+	      if (process.throwDeprecation) {
+	        throw new Error(msg);
+	      } else if (process.traceDeprecation) {
+	        console.trace(msg);
+	      } else {
+	        console.error(msg);
+	      }
+	      warned = true;
+	    }
+	    return fn.apply(this, arguments);
+	  }
+
+	  return deprecated;
+	};
+
+
+	var debugs = {};
+	var debugEnviron;
+	exports.debuglog = function(set) {
+	  if (isUndefined(debugEnviron))
+	    debugEnviron = process.env.NODE_DEBUG || '';
+	  set = set.toUpperCase();
+	  if (!debugs[set]) {
+	    if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
+	      var pid = process.pid;
+	      debugs[set] = function() {
+	        var msg = exports.format.apply(exports, arguments);
+	        console.error('%s %d: %s', set, pid, msg);
+	      };
+	    } else {
+	      debugs[set] = function() {};
+	    }
+	  }
+	  return debugs[set];
+	};
+
+
+	/**
+	 * Echos the value of a value. Trys to print the value out
+	 * in the best way possible given the different types.
+	 *
+	 * @param {Object} obj The object to print out.
+	 * @param {Object} opts Optional options object that alters the output.
+	 */
+	/* legacy: obj, showHidden, depth, colors*/
+	function inspect(obj, opts) {
+	  // default options
+	  var ctx = {
+	    seen: [],
+	    stylize: stylizeNoColor
+	  };
+	  // legacy...
+	  if (arguments.length >= 3) ctx.depth = arguments[2];
+	  if (arguments.length >= 4) ctx.colors = arguments[3];
+	  if (isBoolean(opts)) {
+	    // legacy...
+	    ctx.showHidden = opts;
+	  } else if (opts) {
+	    // got an "options" object
+	    exports._extend(ctx, opts);
+	  }
+	  // set default options
+	  if (isUndefined(ctx.showHidden)) ctx.showHidden = false;
+	  if (isUndefined(ctx.depth)) ctx.depth = 2;
+	  if (isUndefined(ctx.colors)) ctx.colors = false;
+	  if (isUndefined(ctx.customInspect)) ctx.customInspect = true;
+	  if (ctx.colors) ctx.stylize = stylizeWithColor;
+	  return formatValue(ctx, obj, ctx.depth);
+	}
+	exports.inspect = inspect;
+
+
+	// http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
+	inspect.colors = {
+	  'bold' : [1, 22],
+	  'italic' : [3, 23],
+	  'underline' : [4, 24],
+	  'inverse' : [7, 27],
+	  'white' : [37, 39],
+	  'grey' : [90, 39],
+	  'black' : [30, 39],
+	  'blue' : [34, 39],
+	  'cyan' : [36, 39],
+	  'green' : [32, 39],
+	  'magenta' : [35, 39],
+	  'red' : [31, 39],
+	  'yellow' : [33, 39]
+	};
+
+	// Don't use 'blue' not visible on cmd.exe
+	inspect.styles = {
+	  'special': 'cyan',
+	  'number': 'yellow',
+	  'boolean': 'yellow',
+	  'undefined': 'grey',
+	  'null': 'bold',
+	  'string': 'green',
+	  'date': 'magenta',
+	  // "name": intentionally not styling
+	  'regexp': 'red'
+	};
+
+
+	function stylizeWithColor(str, styleType) {
+	  var style = inspect.styles[styleType];
+
+	  if (style) {
+	    return '\u001b[' + inspect.colors[style][0] + 'm' + str +
+	           '\u001b[' + inspect.colors[style][1] + 'm';
+	  } else {
+	    return str;
+	  }
+	}
+
+
+	function stylizeNoColor(str, styleType) {
+	  return str;
+	}
+
+
+	function arrayToHash(array) {
+	  var hash = {};
+
+	  array.forEach(function(val, idx) {
+	    hash[val] = true;
+	  });
+
+	  return hash;
+	}
+
+
+	function formatValue(ctx, value, recurseTimes) {
+	  // Provide a hook for user-specified inspect functions.
+	  // Check that value is an object with an inspect function on it
+	  if (ctx.customInspect &&
+	      value &&
+	      isFunction(value.inspect) &&
+	      // Filter out the util module, it's inspect function is special
+	      value.inspect !== exports.inspect &&
+	      // Also filter out any prototype objects using the circular check.
+	      !(value.constructor && value.constructor.prototype === value)) {
+	    var ret = value.inspect(recurseTimes, ctx);
+	    if (!isString(ret)) {
+	      ret = formatValue(ctx, ret, recurseTimes);
+	    }
+	    return ret;
+	  }
+
+	  // Primitive types cannot have properties
+	  var primitive = formatPrimitive(ctx, value);
+	  if (primitive) {
+	    return primitive;
+	  }
+
+	  // Look up the keys of the object.
+	  var keys = Object.keys(value);
+	  var visibleKeys = arrayToHash(keys);
+
+	  if (ctx.showHidden) {
+	    keys = Object.getOwnPropertyNames(value);
+	  }
+
+	  // IE doesn't make error fields non-enumerable
+	  // http://msdn.microsoft.com/en-us/library/ie/dww52sbt(v=vs.94).aspx
+	  if (isError(value)
+	      && (keys.indexOf('message') >= 0 || keys.indexOf('description') >= 0)) {
+	    return formatError(value);
+	  }
+
+	  // Some type of object without properties can be shortcutted.
+	  if (keys.length === 0) {
+	    if (isFunction(value)) {
+	      var name = value.name ? ': ' + value.name : '';
+	      return ctx.stylize('[Function' + name + ']', 'special');
+	    }
+	    if (isRegExp(value)) {
+	      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+	    }
+	    if (isDate(value)) {
+	      return ctx.stylize(Date.prototype.toString.call(value), 'date');
+	    }
+	    if (isError(value)) {
+	      return formatError(value);
+	    }
+	  }
+
+	  var base = '', array = false, braces = ['{', '}'];
+
+	  // Make Array say that they are Array
+	  if (isArray(value)) {
+	    array = true;
+	    braces = ['[', ']'];
+	  }
+
+	  // Make functions say that they are functions
+	  if (isFunction(value)) {
+	    var n = value.name ? ': ' + value.name : '';
+	    base = ' [Function' + n + ']';
+	  }
+
+	  // Make RegExps say that they are RegExps
+	  if (isRegExp(value)) {
+	    base = ' ' + RegExp.prototype.toString.call(value);
+	  }
+
+	  // Make dates with properties first say the date
+	  if (isDate(value)) {
+	    base = ' ' + Date.prototype.toUTCString.call(value);
+	  }
+
+	  // Make error with message first say the error
+	  if (isError(value)) {
+	    base = ' ' + formatError(value);
+	  }
+
+	  if (keys.length === 0 && (!array || value.length == 0)) {
+	    return braces[0] + base + braces[1];
+	  }
+
+	  if (recurseTimes < 0) {
+	    if (isRegExp(value)) {
+	      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+	    } else {
+	      return ctx.stylize('[Object]', 'special');
+	    }
+	  }
+
+	  ctx.seen.push(value);
+
+	  var output;
+	  if (array) {
+	    output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
+	  } else {
+	    output = keys.map(function(key) {
+	      return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
+	    });
+	  }
+
+	  ctx.seen.pop();
+
+	  return reduceToSingleString(output, base, braces);
+	}
+
+
+	function formatPrimitive(ctx, value) {
+	  if (isUndefined(value))
+	    return ctx.stylize('undefined', 'undefined');
+	  if (isString(value)) {
+	    var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '')
+	                                             .replace(/'/g, "\\'")
+	                                             .replace(/\\"/g, '"') + '\'';
+	    return ctx.stylize(simple, 'string');
+	  }
+	  if (isNumber(value))
+	    return ctx.stylize('' + value, 'number');
+	  if (isBoolean(value))
+	    return ctx.stylize('' + value, 'boolean');
+	  // For some reason typeof null is "object", so special case here.
+	  if (isNull(value))
+	    return ctx.stylize('null', 'null');
+	}
+
+
+	function formatError(value) {
+	  return '[' + Error.prototype.toString.call(value) + ']';
+	}
+
+
+	function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
+	  var output = [];
+	  for (var i = 0, l = value.length; i < l; ++i) {
+	    if (hasOwnProperty(value, String(i))) {
+	      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+	          String(i), true));
+	    } else {
+	      output.push('');
+	    }
+	  }
+	  keys.forEach(function(key) {
+	    if (!key.match(/^\d+$/)) {
+	      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+	          key, true));
+	    }
+	  });
+	  return output;
+	}
+
+
+	function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
+	  var name, str, desc;
+	  desc = Object.getOwnPropertyDescriptor(value, key) || { value: value[key] };
+	  if (desc.get) {
+	    if (desc.set) {
+	      str = ctx.stylize('[Getter/Setter]', 'special');
+	    } else {
+	      str = ctx.stylize('[Getter]', 'special');
+	    }
+	  } else {
+	    if (desc.set) {
+	      str = ctx.stylize('[Setter]', 'special');
+	    }
+	  }
+	  if (!hasOwnProperty(visibleKeys, key)) {
+	    name = '[' + key + ']';
+	  }
+	  if (!str) {
+	    if (ctx.seen.indexOf(desc.value) < 0) {
+	      if (isNull(recurseTimes)) {
+	        str = formatValue(ctx, desc.value, null);
+	      } else {
+	        str = formatValue(ctx, desc.value, recurseTimes - 1);
+	      }
+	      if (str.indexOf('\n') > -1) {
+	        if (array) {
+	          str = str.split('\n').map(function(line) {
+	            return '  ' + line;
+	          }).join('\n').substr(2);
+	        } else {
+	          str = '\n' + str.split('\n').map(function(line) {
+	            return '   ' + line;
+	          }).join('\n');
+	        }
+	      }
+	    } else {
+	      str = ctx.stylize('[Circular]', 'special');
+	    }
+	  }
+	  if (isUndefined(name)) {
+	    if (array && key.match(/^\d+$/)) {
+	      return str;
+	    }
+	    name = JSON.stringify('' + key);
+	    if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
+	      name = name.substr(1, name.length - 2);
+	      name = ctx.stylize(name, 'name');
+	    } else {
+	      name = name.replace(/'/g, "\\'")
+	                 .replace(/\\"/g, '"')
+	                 .replace(/(^"|"$)/g, "'");
+	      name = ctx.stylize(name, 'string');
+	    }
+	  }
+
+	  return name + ': ' + str;
+	}
+
+
+	function reduceToSingleString(output, base, braces) {
+	  var numLinesEst = 0;
+	  var length = output.reduce(function(prev, cur) {
+	    numLinesEst++;
+	    if (cur.indexOf('\n') >= 0) numLinesEst++;
+	    return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
+	  }, 0);
+
+	  if (length > 60) {
+	    return braces[0] +
+	           (base === '' ? '' : base + '\n ') +
+	           ' ' +
+	           output.join(',\n  ') +
+	           ' ' +
+	           braces[1];
+	  }
+
+	  return braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
+	}
+
+
+	// NOTE: These type checking functions intentionally don't use `instanceof`
+	// because it is fragile and can be easily faked with `Object.create()`.
+	function isArray(ar) {
+	  return Array.isArray(ar);
+	}
+	exports.isArray = isArray;
+
+	function isBoolean(arg) {
+	  return typeof arg === 'boolean';
+	}
+	exports.isBoolean = isBoolean;
+
+	function isNull(arg) {
+	  return arg === null;
+	}
+	exports.isNull = isNull;
+
+	function isNullOrUndefined(arg) {
+	  return arg == null;
+	}
+	exports.isNullOrUndefined = isNullOrUndefined;
+
+	function isNumber(arg) {
+	  return typeof arg === 'number';
+	}
+	exports.isNumber = isNumber;
+
+	function isString(arg) {
+	  return typeof arg === 'string';
+	}
+	exports.isString = isString;
+
+	function isSymbol(arg) {
+	  return typeof arg === 'symbol';
+	}
+	exports.isSymbol = isSymbol;
+
+	function isUndefined(arg) {
+	  return arg === void 0;
+	}
+	exports.isUndefined = isUndefined;
+
+	function isRegExp(re) {
+	  return isObject(re) && objectToString(re) === '[object RegExp]';
+	}
+	exports.isRegExp = isRegExp;
+
+	function isObject(arg) {
+	  return typeof arg === 'object' && arg !== null;
+	}
+	exports.isObject = isObject;
+
+	function isDate(d) {
+	  return isObject(d) && objectToString(d) === '[object Date]';
+	}
+	exports.isDate = isDate;
+
+	function isError(e) {
+	  return isObject(e) &&
+	      (objectToString(e) === '[object Error]' || e instanceof Error);
+	}
+	exports.isError = isError;
+
+	function isFunction(arg) {
+	  return typeof arg === 'function';
+	}
+	exports.isFunction = isFunction;
+
+	function isPrimitive(arg) {
+	  return arg === null ||
+	         typeof arg === 'boolean' ||
+	         typeof arg === 'number' ||
+	         typeof arg === 'string' ||
+	         typeof arg === 'symbol' ||  // ES6 symbol
+	         typeof arg === 'undefined';
+	}
+	exports.isPrimitive = isPrimitive;
+
+	exports.isBuffer = __webpack_require__(5);
+
+	function objectToString(o) {
+	  return Object.prototype.toString.call(o);
+	}
+
+
+	function pad(n) {
+	  return n < 10 ? '0' + n.toString(10) : n.toString(10);
+	}
+
+
+	var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+	              'Oct', 'Nov', 'Dec'];
+
+	// 26 Feb 16:19:34
+	function timestamp() {
+	  var d = new Date();
+	  var time = [pad(d.getHours()),
+	              pad(d.getMinutes()),
+	              pad(d.getSeconds())].join(':');
+	  return [d.getDate(), months[d.getMonth()], time].join(' ');
+	}
+
+
+	// log is just a thin wrapper to console.log that prepends a timestamp
+	exports.log = function() {
+	  console.log('%s - %s', timestamp(), exports.format.apply(exports, arguments));
+	};
+
+
+	/**
+	 * Inherit the prototype methods from one constructor into another.
+	 *
+	 * The Function.prototype.inherits from lang.js rewritten as a standalone
+	 * function (not on Function.prototype). NOTE: If this file is to be loaded
+	 * during bootstrapping this function needs to be rewritten using some native
+	 * functions as prototype setup using normal JavaScript does not work as
+	 * expected during bootstrapping (see mirror.js in r114903).
+	 *
+	 * @param {function} ctor Constructor function which needs to inherit the
+	 *     prototype.
+	 * @param {function} superCtor Constructor function to inherit prototype from.
+	 */
+	exports.inherits = __webpack_require__(6);
+
+	exports._extend = function(origin, add) {
+	  // Don't do anything if add isn't an object
+	  if (!add || !isObject(add)) return origin;
+
+	  var keys = Object.keys(add);
+	  var i = keys.length;
+	  while (i--) {
+	    origin[keys[i]] = add[keys[i]];
+	  }
+	  return origin;
+	};
+
+	function hasOwnProperty(obj, prop) {
+	  return Object.prototype.hasOwnProperty.call(obj, prop);
+	}
+
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }()), __webpack_require__(4)))
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	// shim for using process in browser
+
+	var process = module.exports = {};
+	var queue = [];
+	var draining = false;
+	var currentQueue;
+	var queueIndex = -1;
+
+	function cleanUpNextTick() {
+	    draining = false;
+	    if (currentQueue.length) {
+	        queue = currentQueue.concat(queue);
+	    } else {
+	        queueIndex = -1;
+	    }
+	    if (queue.length) {
+	        drainQueue();
+	    }
+	}
+
+	function drainQueue() {
+	    if (draining) {
+	        return;
+	    }
+	    var timeout = setTimeout(cleanUpNextTick);
+	    draining = true;
+
+	    var len = queue.length;
+	    while(len) {
+	        currentQueue = queue;
+	        queue = [];
+	        while (++queueIndex < len) {
+	            if (currentQueue) {
+	                currentQueue[queueIndex].run();
+	            }
+	        }
+	        queueIndex = -1;
+	        len = queue.length;
+	    }
+	    currentQueue = null;
+	    draining = false;
+	    clearTimeout(timeout);
+	}
+
+	process.nextTick = function (fun) {
+	    var args = new Array(arguments.length - 1);
+	    if (arguments.length > 1) {
+	        for (var i = 1; i < arguments.length; i++) {
+	            args[i - 1] = arguments[i];
+	        }
+	    }
+	    queue.push(new Item(fun, args));
+	    if (queue.length === 1 && !draining) {
+	        setTimeout(drainQueue, 0);
+	    }
+	};
+
+	// v8 likes predictible objects
+	function Item(fun, array) {
+	    this.fun = fun;
+	    this.array = array;
+	}
+	Item.prototype.run = function () {
+	    this.fun.apply(null, this.array);
+	};
+	process.title = 'browser';
+	process.browser = true;
+	process.env = {};
+	process.argv = [];
+	process.version = ''; // empty string to avoid regexp issues
+	process.versions = {};
+
+	function noop() {}
+
+	process.on = noop;
+	process.addListener = noop;
+	process.once = noop;
+	process.off = noop;
+	process.removeListener = noop;
+	process.removeAllListeners = noop;
+	process.emit = noop;
+
+	process.binding = function (name) {
+	    throw new Error('process.binding is not supported');
+	};
+
+	process.cwd = function () { return '/' };
+	process.chdir = function (dir) {
+	    throw new Error('process.chdir is not supported');
+	};
+	process.umask = function() { return 0; };
+
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+	module.exports = function isBuffer(arg) {
+	  return arg && typeof arg === 'object'
+	    && typeof arg.copy === 'function'
+	    && typeof arg.fill === 'function'
+	    && typeof arg.readUInt8 === 'function';
+	}
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	if (typeof Object.create === 'function') {
+	  // implementation from standard node.js 'util' module
+	  module.exports = function inherits(ctor, superCtor) {
+	    ctor.super_ = superCtor
+	    ctor.prototype = Object.create(superCtor.prototype, {
+	      constructor: {
+	        value: ctor,
+	        enumerable: false,
+	        writable: true,
+	        configurable: true
+	      }
+	    });
+	  };
+	} else {
+	  // old school shim for old browsers
+	  module.exports = function inherits(ctor, superCtor) {
+	    ctor.super_ = superCtor
+	    var TempCtor = function () {}
+	    TempCtor.prototype = superCtor.prototype
+	    ctor.prototype = new TempCtor()
+	    ctor.prototype.constructor = ctor
+	  }
+	}
+
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * @author huntbao
+	 * @module Kiva/Util
 	 */
 
 	'use strict'
 
-	var  KivaString = {
+	var util = __webpack_require__(3)
 
-	    email: function (options) {
-	        return 'just.for.test@gmail.com'
+	module.exports = {
+	    /**
+	     * 获取随机数字, 可以通过 min 和 max 指定范围
+	     * @param {number} [min = 0] - 范围最小值
+	     * @param {number} [max = 128] - 范围最大值
+	     * @param {boolean} [includeMax = true] - 是否包括最大值
+	     * @return {number} - 返回数字
+	     */
+	    randomNum: function (/*min, max, includeMax*/) {
+	        var min = 0
+	        var max = 128
+	        var includeMax = true
+	        var argsNum = arguments.length
+	        if (argsNum === 1) {
+	            max = arguments[0]
+	        } else if (argsNum > 0) {
+	            min = arguments[0]
+	            max = arguments[1]
+	            if (arguments.length === 3) {
+	                includeMax = arguments[2]
+	            }
+	        }
+	        if (includeMax) {
+	            return Math.floor(Math.random() * (max - min + 1)) + min
+	        } else {
+	            return Math.floor(Math.random() * (max - min)) + min
+	        }
 	    }
 	}
 
-	module.exports = KivaString
+
+/***/ },
+/* 8 */
+/***/ function(module, exports) {
+
+	/**
+	 * @author huntbao
+	 * @module Kiva/Dict
+	 */
+	'use strict'
+
+	var letters = 'abcdefghijklmnopqrstuvwxyz'
+	var LETTERS_LC = letters.split('')
+	var LETTERS_UC = letters.toUpperCase().split('')
+	var LETTERS = LETTERS_LC.concat(LETTERS_UC)
+	var NUMBERS = '0123456789'.split('')
+	var SYMBOLS = '`~!@#$%^&*()-_=+[]\{}|;\':",./<>? '.split('')
+	var EMAIL_DOMAINS = ['126.com', '163.com', 'gmail.com', 'outlook.com', 'qq.com']
+	var VALID_EMAIL_CH = ['.', '_'].concat(NUMBERS).concat(LETTERS)
+
+	module.exports = {
+	    /**
+	     * 英文字母
+	     */
+	    LETTERS: LETTERS,
+	    /**
+	     * 小写英文字母
+	     */
+	    LETTERS_LC: LETTERS_LC,
+	    /**
+	     * 大写英文字母
+	     */
+	    LETTERS_UC: LETTERS_UC,
+	    /**
+	     * 数字
+	     */
+	    NUMBERS: NUMBERS,
+	    /**
+	     * 字符
+	     */
+	    SYMBOLS: SYMBOLS,
+	    /**
+	     * 常见邮箱域名
+	     */
+	    EMAIL_DOMAINS: EMAIL_DOMAINS,
+	    /**
+	     * 有效的可以作为邮箱名的字符
+	     * 邮箱第一个字符要以字母开头
+	     */
+	    VALID_EMAIL_CH: VALID_EMAIL_CH
+	}
 
 
 /***/ }
